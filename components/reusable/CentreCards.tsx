@@ -2,11 +2,10 @@
 import React, { useEffect, useState } from 'react'
 import { Card, CardContent, CardFooter, CardHeader } from '../ui/card'
 import { Button } from '../ui/button'
-import { MapIcon, LocateFixed } from 'lucide-react'
+import { MapIcon, LocateFixed, LocateOff } from 'lucide-react'
 import { centres } from '@/app/generated/prisma'
 import { toast } from 'react-hot-toast'
 
-// Distance calculation functions remain the same
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371 // Earth radius in km
     const dLat = deg2rad(lat2 - lat1)
@@ -25,17 +24,21 @@ const CentreCards = ({ centres }: { centres: any }) => {
     const [userLocation, setUserLocation] = useState<{
         lat: number | null
         lng: number | null
-    }>({ lat: null, lng: null })
+        accuracy: number | null
+        lastUpdated: Date | null
+    }>({ 
+        lat: null, 
+        lng: null,
+        accuracy: null,
+        lastUpdated: null
+    })
     const [isLoadingLocation, setIsLoadingLocation] = useState(false)
     const [locationError, setLocationError] = useState('')
     const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null)
+    const [watchId, setWatchId] = useState<number | null>(null)
 
-    // Check if geolocation is supported
-    const isGeolocationSupported = () => {
-        return 'geolocation' in navigator
-    }
+    const isGeolocationSupported = () => 'geolocation' in navigator
 
-    // Check permission state
     const checkPermission = async () => {
         if (!isGeolocationSupported()) return
         
@@ -43,68 +46,90 @@ const CentreCards = ({ centres }: { centres: any }) => {
             const permissionStatus = await navigator.permissions.query({
                 name: 'geolocation'
             })
-            setPermissionGranted(permissionStatus.state === 'granted')
+            const granted = permissionStatus.state === 'granted'
+            setPermissionGranted(granted)
+            if (granted) startWatching()
+            
+            permissionStatus.onchange = () => {
+                const newGranted = permissionStatus.state === 'granted'
+                setPermissionGranted(newGranted)
+                if (!newGranted) stopWatching()
+                else startWatching()
+            }
         } catch (error) {
             console.error('Error checking permission:', error)
         }
     }
 
-    useEffect(() => {
-        checkPermission()
-    }, [])
-
-    const getCurrentLocation = () => {
-        if (!isGeolocationSupported()) {
-            setLocationError('Geolocation is not supported by your browser')
-            return
-        }
+    const startWatching = () => {
+        if (!isGeolocationSupported() || watchId !== null) return
 
         setIsLoadingLocation(true)
         setLocationError('')
 
-        navigator.geolocation.getCurrentPosition(
+        const id = navigator.geolocation.watchPosition(
             (position) => {
                 setUserLocation({
                     lat: position.coords.latitude,
-                    lng: position.coords.longitude
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    lastUpdated: new Date()
                 })
                 setPermissionGranted(true)
                 setIsLoadingLocation(false)
-                toast.success('Location access granted!')
             },
             (error) => {
                 setIsLoadingLocation(false)
                 setPermissionGranted(false)
-                
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        setLocationError('Location access was denied. Please enable it in your browser settings.')
-                        toast.error('Location access denied')
-                        break
-                    case error.POSITION_UNAVAILABLE:
-                        setLocationError('Location information is unavailable.')
-                        break
-                    case error.TIMEOUT:
-                        setLocationError('The request to get location timed out.')
-                        break
-                    default:
-                        setLocationError('An unknown error occurred.')
-                }
+                handleGeolocationError(error)
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000, // 10 seconds
-                maximumAge: 0 // Don't use cached position
+                maximumAge: 30000, // Accept cached positions no older than 30 seconds
+                timeout: 10000
             }
         )
+        setWatchId(id)
+    }
+
+    const stopWatching = () => {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId)
+            setWatchId(null)
+        }
+    }
+
+    const handleGeolocationError = (error: GeolocationPositionError) => {
+        stopWatching()
+        
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                setLocationError('Location access denied. Please enable it in browser settings.')
+                toast.error('Location tracking disabled')
+                break
+            case error.POSITION_UNAVAILABLE:
+                setLocationError('Location information unavailable.')
+                break
+            case error.TIMEOUT:
+                setLocationError('Location request timed out. Trying again...')
+                setTimeout(startWatching, 5000)
+                break
+            default:
+                setLocationError('Error getting location.')
+        }
     }
 
     const requestLocationAccess = () => {
+        if (permissionGranted) {
+            // Force refresh if already granted
+            stopWatching()
+            startWatching()
+            return
+        }
+
         toast.promise(
             new Promise<void>((resolve, reject) => {
-                getCurrentLocation()
-                // We'll rely on the geolocation callbacks to resolve/reject
-                // This is just for the toast UI
+                startWatching()
                 const checkInterval = setInterval(() => {
                     if (permissionGranted !== null) {
                         clearInterval(checkInterval)
@@ -114,40 +139,72 @@ const CentreCards = ({ centres }: { centres: any }) => {
             }),
             {
                 loading: 'Requesting location access...',
-                success: 'Location access granted!',
+                success: 'Location tracking active!',
                 error: 'Location access denied'
             }
         )
     }
 
+    useEffect(() => {
+        checkPermission()
+        return () => stopWatching()
+    }, [])
+
     return (
         <div className="space-y-4">
-            <div className="flex flex-col items-center gap-2 mb-4">
-                {permissionGranted === false && (
-                    <div className="text-red-500 text-center">
-                        Location access is required to show distances.
+            <div className="flex flex-col items-center gap-2 mb-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2 w-full justify-between">
+                    <div className="flex items-center gap-2">
+                        {permissionGranted ? (
+                            <>
+                                <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse"></div>
+                                <span className="text-sm">Location active</span>
+                            </>
+                        ) : (
+                            <>
+                                <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                                <span className="text-sm">Location offline</span>
+                            </>
+                        )}
                     </div>
-                )}
+                    
+                    {userLocation.lastUpdated && (
+                        <span className="text-xs text-gray-500">
+                            Updated: {new Date(userLocation.lastUpdated).toLocaleTimeString()}
+                        </span>
+                    )}
+                </div>
 
                 <Button
                     onClick={requestLocationAccess}
                     disabled={isLoadingLocation}
-                    variant="outline"
-                    className="flex items-center gap-2"
+                    variant={permissionGranted ? "default" : "outline"}
+                    className="flex items-center gap-2 w-full"
                 >
                     {isLoadingLocation ? (
                         'Getting Location...'
-                    ) : (
+                    ) : permissionGranted ? (
                         <>
                             <LocateFixed className="h-4 w-4" />
-                            {permissionGranted ? 'Update My Location' : 'Enable Location Access'}
+                            Refresh Location
+                        </>
+                    ) : (
+                        <>
+                            <LocateOff className="h-4 w-4" />
+                            Enable Live Tracking
                         </>
                     )}
                 </Button>
 
                 {locationError && (
-                    <div className="text-red-500 text-sm text-center max-w-md">
+                    <div className="text-red-500 text-sm text-center w-full">
                         {locationError}
+                    </div>
+                )}
+
+                {userLocation.accuracy && (
+                    <div className="text-xs text-gray-500">
+                        Accuracy: ±{Math.round(userLocation.accuracy)} meters
                     </div>
                 )}
             </div>

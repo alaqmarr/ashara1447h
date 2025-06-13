@@ -32,7 +32,7 @@ const page = async () => {
             <div
                 className='flex flex-row items-center justify-evenly flex-wrap'
             >
-                <AddCentre/>
+                <AddCentre />
                 <AddLocation />
                 <AddTeam />
                 <AddMember teams={teams} />
