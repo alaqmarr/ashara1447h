@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model team {
+  id                String             @id @default(cuid())
+  name              String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  assignedHelpline  String
+  members           member[]
+  emergencyContacts emergencyContact[]
+  helps             help[]
+}
+
+model member {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  number    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teamId    String?
+  team      team?    @relation(fields: [teamId], references: [id])
+}
+
+model centres {
+  id        String     @id @default(cuid())
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  mapUrl    String
+  embed     String
+  latitude  Float 
+  longitude Float
+  qrs       qr[]
+  hotels    hotel[]
+  locations location[]
+  screens   screens[]
+}
+
+model hotel {
+  id               String   @id @default(cuid())
+  name             String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  rating           Int?
+  centresId        String?
+  location         String?
+  mapUrl           String?
+  number           String?
+  email            String?
+  bookingUrl       String?
+  closestCentre    String?
+  distanceToCentre Float?
+  centres          centres? @relation(fields: [centresId], references: [id])
+}
+
+model location {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  centresId String
+  centres   centres  @relation(fields: [centresId], references: [id])
+}
+
+model arrival {
+  id        String                  @id @default(cuid())
+  name      String
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  helpdesk  arrivalHelpdeskMember[]
+}
+
+model arrivalHelpdeskMember {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  arrivalId String
+  arrival   arrival  @relation(fields: [arrivalId], references: [id])
+}
+
+model emergencyContact {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  phone     String
+  email     String
+  teamId    String
+  team      team     @relation(fields: [teamId], references: [id])
+}
+
+model transport {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model qr {
+  id        String   @id @default(cuid())
+  name      String
+  centreId  String
+  centre    centres  @relation(fields: [centreId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  helps     help[]
+}
+
+model help {
+  id        String   @id @default(cuid())
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  qrId      String
+  qr        qr       @relation(fields: [qrId], references: [id])
+  teamId    String
+  team      team     @relation(fields: [teamId], references: [id])
+}
+
+model screens {
+  id          String       @id @default(cuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  content     String
+  type        String
+  centreId    String
+  centre      centres      @relation(fields: [centreId], references: [id])
+  screenTeams screenTeam[]
+}
+
+model screenTeam {
+  id        String   @id @default(cuid())
+  name      String
+  number    String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  screenId  String
+  screen    screens  @relation(fields: [screenId], references: [id])
+}
