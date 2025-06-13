@@ -26,8 +26,8 @@ const CentreCards = ({ centres }: { centres: any }) => {
         lng: number | null
         accuracy: number | null
         lastUpdated: Date | null
-    }>({ 
-        lat: null, 
+    }>({
+        lat: null,
         lng: null,
         accuracy: null,
         lastUpdated: null
@@ -41,7 +41,7 @@ const CentreCards = ({ centres }: { centres: any }) => {
 
     const checkPermission = async () => {
         if (!isGeolocationSupported()) return
-        
+
         try {
             const permissionStatus = await navigator.permissions.query({
                 name: 'geolocation'
@@ -49,7 +49,7 @@ const CentreCards = ({ centres }: { centres: any }) => {
             const granted = permissionStatus.state === 'granted'
             setPermissionGranted(granted)
             if (granted) startWatching()
-            
+
             permissionStatus.onchange = () => {
                 const newGranted = permissionStatus.state === 'granted'
                 setPermissionGranted(newGranted)
@@ -101,7 +101,7 @@ const CentreCards = ({ centres }: { centres: any }) => {
 
     const handleGeolocationError = (error: GeolocationPositionError) => {
         stopWatching()
-        
+
         switch (error.code) {
             case error.PERMISSION_DENIED:
                 setLocationError('Location access denied. Please enable it in browser settings.')
@@ -167,7 +167,7 @@ const CentreCards = ({ centres }: { centres: any }) => {
                             </>
                         )}
                     </div>
-                    
+
                     {userLocation.lastUpdated && (
                         <span className="text-xs text-gray-500">
                             Updated: {new Date(userLocation.lastUpdated).toLocaleTimeString()}
@@ -232,8 +232,8 @@ const CentreCards = ({ centres }: { centres: any }) => {
                             </h3>
                             {distance !== null && (
                                 <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                                    {distance < 1 
-                                        ? `${(distance * 1000).toFixed(0)} meters away` 
+                                    {distance < 1
+                                        ? `${(distance * 1000).toFixed(0)} meters away`
                                         : `${distance.toFixed(1)} km away`}
                                 </span>
                             )}
@@ -248,9 +248,9 @@ const CentreCards = ({ centres }: { centres: any }) => {
 
                         {centre.mapUrl && (
                             <CardFooter>
-                                <a 
-                                    href={centre.mapUrl} 
-                                    target="_blank" 
+                                <a
+                                    href={centre.mapUrl}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="w-full"
                                 >

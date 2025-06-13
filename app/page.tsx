@@ -4,6 +4,7 @@ import HeadingCard from '@/components/reusable/HeadingCard'
 import Hero from '@/components/reusable/Hero'
 import prisma from '@/lib/prisma'
 import React from 'react'
+const revalidate = 10;
 
 const page = async () => {
   const centres = await prisma.centres.findMany({
