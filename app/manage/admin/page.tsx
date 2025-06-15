@@ -19,6 +19,12 @@ const page = async () => {
         }
     })
 
+    const centres = await prisma.centres.findMany({
+        orderBy: {
+            createdAt: 'desc',
+        },
+    });
+
     const teams = await prisma.team.findMany({
         orderBy: {
             createdAt: 'desc',
@@ -33,7 +39,7 @@ const page = async () => {
                 className='flex flex-row items-center justify-evenly flex-wrap'
             >
                 <AddCentre />
-                <AddLocation />
+                <AddLocation centres={centres} />
                 <AddTeam />
                 <AddMember teams={teams} />
             </div>

@@ -35,21 +35,7 @@ const formSchema = z.object({
     center: z.string().min(2).max(50)
 })
 
-export function AddLocation() {
-    const [centres, setCentres] = React.useState([])
-    React.useEffect(() => {
-        const getCentres = async () => {
-            const response = await fetch('/api/centres')
-            if (!response.ok) {
-                throw new Error('Failed to fetch centres')
-            }
-            const data = await response.json()
-            setCentres(data.centres)
-        }
-        getCentres().catch((error) => {
-            console.error("Error fetching centres:", error)
-        })
-    }, [])
+export function AddLocation({ centres }: { centres: any }) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -123,7 +109,14 @@ export function AddLocation() {
                                         <SelectContent
                                             className="w-full"
                                         >
-                                            <SelectItem value="saifee-masjid" className="w-full">Saifee Masjid</SelectItem>
+                                            {centres.map((centre: any) => (
+                                                <SelectItem
+                                                    key={centre.id}
+                                                    value={centre.id}
+                                                >
+                                                    {centre.name}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

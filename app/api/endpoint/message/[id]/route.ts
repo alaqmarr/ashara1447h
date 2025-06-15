@@ -42,7 +42,7 @@ export async function POST(
     const responses = await Promise.all(
       incharge.members.map(async (item) => {
         const json = {
-          channelId: "684bc389339286e555c4dfc5",
+          channelId: "684e91538b9f64ca90e2b177",
           channelType: "whatsapp",
           recipient: {
             name: item.name,
@@ -65,8 +65,8 @@ export async function POST(
         const response = await fetch(endpoint, {
           method: "POST",
           headers: {
-            apiKey: "684bc8d50d363eced41f7b23",
-            apiSecret: "bcb244a04a904daca63ff05efc84c1f4",
+            apiKey: "684e96a3449ced4326606890",
+            apiSecret: "35fca6e206c14bea8176bea79323a8f9",
             "Content-Type": "application/json",
           },
           body: JSON.stringify(json),

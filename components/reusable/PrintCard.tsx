@@ -17,7 +17,7 @@ export const PrintCard: React.FC<PrintCardProps> = ({ name, centreName, qrId }) 
     new QRCodeStyling({
       width: 160,
       height: 160,
-      data: `http://192.168.0.14:3000/helpline/${qrId}`,
+      data: `https://ashara1447h.vercel.app/helpline/${qrId}`,
       dotsOptions: {
         color: '#000000',
         type: 'square',
