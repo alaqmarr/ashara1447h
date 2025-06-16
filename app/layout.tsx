@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import NavBar from "@/components/NavBar";
 import { Toaster } from "react-hot-toast";
+import Whatsapp from "@/components/Whatsapp";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
             {children}
           </main>
         </SidebarProvider>
+        <Whatsapp/>
       </body>
     </html>
   );
