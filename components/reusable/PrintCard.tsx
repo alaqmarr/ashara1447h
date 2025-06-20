@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react'
 import QRCodeStyling from 'qr-code-styling'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 interface PrintCardProps {
   name: string
@@ -17,7 +18,7 @@ export const PrintCard: React.FC<PrintCardProps> = ({ name, centreName, qrId }) 
     new QRCodeStyling({
       width: 160,
       height: 160,
-      data: `https://ashara1447h.vercel.app/helpline/${qrId}`,
+      data: `http://192.168.3.142:3000/helpline/${qrId}`,
       dotsOptions: {
         color: '#000000',
         type: 'square',
@@ -198,6 +199,13 @@ export const PrintCard: React.FC<PrintCardProps> = ({ name, centreName, qrId }) 
         >
           Print
         </Button>
+        <Link href={`/helpline/${qrId}`} className="ml-4 text-blue-600 hover:underline">
+          <Button
+            className="px-6 py-2 text-sm font-semibold rounded-lg shadow-md bg-blue-600 text-white hover:bg-blue-700 transition-all"
+          >
+            Visit Helpline
+          </Button>
+        </Link>
       </div>
     </div>
   )

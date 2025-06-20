@@ -136,18 +136,18 @@
   font-weight: normal;
   font-style: normal;
 }
-.title-bg {
+html {
   position: relative;
   z-index: 1; /* Keep text on top */
 }
 
-.title-bg::before {
+html::before {
   content: "";
   background-image: url("/bg7.avif");
   opacity: 0.2;
   position: absolute;
   inset: 0;
-  z-index: -1; /* Send background behind text */
+  z-index: -1;
 }
 .title-bg2 {
   position: relative;

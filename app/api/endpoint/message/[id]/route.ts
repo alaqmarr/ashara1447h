@@ -51,7 +51,7 @@ export async function POST(
           whatsapp: {
             type: "template",
             template: {
-              templateName: "helpline",
+              templateName: "assistance",
               bodyValues: {
                 location: qrCode.name,
                 centre: qrCode.centre.name,

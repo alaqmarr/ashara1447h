@@ -38,15 +38,15 @@ export default function RootLayout({
       >
         <Toaster/>
         <SidebarProvider>
-          <AppSidebar />
+          {/* <AppSidebar /> */}
           <main
             className="w-full"
           >
-            <NavBar />
+            {/* <NavBar /> */}
             {children}
           </main>
         </SidebarProvider>
-        <Whatsapp/>
+        {/* <Whatsapp/> */}
       </body>
     </html>
   );
