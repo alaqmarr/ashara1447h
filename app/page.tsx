@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import prisma from '@/lib/prisma'
 import Link from 'next/link';
 import React from 'react'
-
+export const revalidate = 120; // Revalidate every 60 seconds
 const page = async () => {
   const centres = await prisma.qr.findMany({
     orderBy: {
