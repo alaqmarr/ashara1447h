@@ -1,9 +1,13 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
-import QRCodeStyling from 'qr-code-styling'
+import React, { useRef } from 'react'
+import { useReactToPrint } from 'react-to-print'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { Printer, Scan, Download } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
+import { toast } from 'react-hot-toast'
+import Image from 'next/image'
 
 interface PrintCardProps {
   name: string
@@ -12,201 +16,109 @@ interface PrintCardProps {
 }
 
 export const PrintCard: React.FC<PrintCardProps> = ({ name, centreName, qrId }) => {
-  const qrRef = useRef<HTMLDivElement | null>(null)
+  const printRef = useRef<HTMLDivElement>(null)
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`https://helpline.ashara1447relaysec.com/${qrId}`)}`
 
-  const qrCode = useRef(
-    new QRCodeStyling({
-      width: 160,
-      height: 160,
-      data: `http://192.168.3.142:3000/helpline/${qrId}`,
-      dotsOptions: {
-        color: '#000000',
-        type: 'square',
-      },
-      backgroundOptions: {
-        color: 'transparent', // Transparent so the image shows through
-      },
-    })
-  )
-
-  useEffect(() => {
-    if (qrRef.current) {
-      qrRef.current.innerHTML = ''
-      qrCode.current.append(qrRef.current)
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    pageStyle: `
+    @page {
+      size: A4;
+      margin: 20mm;
     }
-  }, [qrId])
-
-  const handlePrint = async () => {
-    const blob = await qrCode.current.getRawData('png');
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      const qrDataUrl = reader.result as string;
-
-      const printWindow = window.open('', '', 'width=800,height=600');
-      if (!printWindow) return;
-
-      // Use document.open/write/close as a workaround for the deprecated warning,
-      // or use DOM manipulation after loading the window.
-      printWindow.document.open();
-      printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print QR</title>
-          <style>
-            * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-
-            html, body {
-              width: 100%;
-              height: 100%;
-            }
-
-            body {
-              font-family: 'Segoe UI', sans-serif;
-              background: #f9f9f9 url("/bg7.avif") no-repeat center center;
-              background-size: cover;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 20mm;
-            }
-
-            .qr-box {
-              background: rgba(255, 255, 255, 0.92);
-              padding: 32px;
-              border-radius: 16px;
-              box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-              border: 1px solid #e0e0e0;
-              max-width: 420px;
-              width: 100%;
-              margin: auto;
-              text-align: center;
-            }
-
-            h1 {
-              font-size: 22px;
-              font-weight: 600;
-              color: #222;
-              margin-bottom: 10px;
-              text-transform: uppercase;
-            }
-
-            .location {
-              font-size: 14px;
-              font-weight: 500;
-              color: #666;
-              margin-bottom: 16px;
-            }
-
-            .description {
-              font-size: 15px;
-              color: #333;
-              margin-bottom: 24px;
-              line-height: 1.6;
-            }
-
-            .qr-image {
-              width: 180px;
-              height: 180px;
-              border-radius: 12px;
-              object-fit: cover;
-              margin-bottom: 16px;
-            }
-
-            @media print {
-              body {
-                background: #f9f9f9 url("/bg2.jpg") center center !important;
-              }
-
-              .qr-box {
-                box-shadow: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="qr-box">
-            <h1>${name}</h1>
-            <div class="location">${centreName}</div>
-            <p class="description">
-              For any <strong style="color: red;">assistance</strong> or <strong style="color: red;">emergency</strong>,
-              please scan the QR code below to get in touch:
-            </p>
-            <img src="${qrDataUrl}" class="qr-image" />
-          </div>
-          <script>
-            window.onload = function () {
-              window.print();
-              window.onafterprint = function () {
-                window.close();
-              };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-      printWindow.document.close();
-    };
-
-    if (blob instanceof Blob) {
-      reader.readAsDataURL(blob);
+    @media print {
+      body {
+        background-color: #f9fafb !important;
+        -webkit-print-color-adjust: exact;
+      }
+      .print-only {
+        display: block !important;
+      }
     }
+  `,
+    onAfterPrint: () =>
+      toast.success("QR code has been printed"),
+    onPrintError: () =>
+      toast.error("Failed to print QR code"),
+  })
+
+
+  const handleDownload = () => {
+    const link = document.createElement('a')
+    link.href = qrUrl
+    link.download = `${name.replace(/\s+/g, '_')}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast.success("QR code downloaded successfully")
   }
 
-
-
   return (
-    <div
-      className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 shadow-lg rounded-2xl p-8 mb-10 max-w-md mx-auto"
-      id={qrId}
-    >
-      <div id={`print-${qrId}`}>
-        <h1 className="text-2xl font-semibold text-gray-800 tracking-tight mb-2 text-center uppercase">
-          {name}
-        </h1>
+    <Card className="w-full max-w-md mx-auto shadow-lg">
 
-        <div className="text-sm text-gray-500 font-medium text-center mb-6">
-          {centreName}
+      <CardContent className="flex flex-col items-center">
+        {/* Printable content */}
+        <div ref={printRef} className="p-6 bg-white rounded-lg">
+          <div className="print-only mb-4 text-center">
+            <h2 className="text-xl font-semibold">{name}</h2>
+            <p className="text-sm text-gray-600">{centreName}</p>
+          </div>
+
+          <p className="mb-6 text-center text-gray-700">
+            For any <span className="font-semibold text-red-600">assistance</span> or{' '}
+            <span className="font-semibold text-red-600">emergency</span>, scan this QR code:
+          </p>
+
+          <div className="flex justify-center mb-6">
+            <div className="relative w-48 h-48 border-2 border-blue-100 rounded-lg p-2 bg-white">
+              <Image
+                src={qrUrl}
+                alt={`QR Code for ${name}`}
+                width={200}
+                height={200}
+                className="w-full h-full"
+                unoptimized // Since we're using a third-party QR service
+              />
+            </div>
+          </div>
+
+          <p className="text-xs text-center text-gray-500 print-only">
+            Generated by Ashara1447RelaySec • {new Date().toLocaleDateString()}
+          </p>
         </div>
 
-        <p className="text-gray-700 text-center text-base leading-relaxed mb-6">
-          For any <span className="font-semibold text-red-600">assistance</span> or{' '}
-          <span className="font-semibold text-red-600">emergency</span>, please scan the QR code below to get in touch:
-        </p>
-
-        <div className="flex justify-center mb-6">
-          <div className="relative w-40 h-40 rounded-xl overflow-hidden border border-gray-300 shadow-sm">
-            <img
-              src="/logo.svg"
-              alt="QR Background"
-              className="absolute inset-0 w-full h-full object-cover"
+        {/* Non-printable preview */}
+        <div className="flex justify-center mb-6 md:hidden">
+          <div className="relative w-32 h-32 border border-gray-200 rounded-lg">
+            <Image
+              src={qrUrl}
+              alt={`QR Code preview for ${name}`}
+              width={128}
+              height={128}
+              className="w-full h-full"
+              unoptimized
             />
-            <div ref={qrRef} className="absolute inset-0 flex items-center justify-center" />
           </div>
         </div>
-      </div>
+      </CardContent>
 
-      <div className="text-center">
-        <Button
-          onClick={handlePrint}
-          className="px-6 py-2 text-sm font-semibold rounded-lg shadow-md bg-blue-600 text-white hover:bg-blue-700 transition-all"
-        >
-          Print
+      <CardFooter className="flex flex-col sm:flex-row gap-3 justify-center">
+        <Button onClick={handlePrint} className="gap-2">
+          <Printer className="h-4 w-4" />
+          Print QR
         </Button>
-        <Link href={`/helpline/${qrId}`} className="ml-4 text-blue-600 hover:underline">
-          <Button
-            className="px-6 py-2 text-sm font-semibold rounded-lg shadow-md bg-blue-600 text-white hover:bg-blue-700 transition-all"
-          >
+        <Button variant="outline" onClick={handleDownload} className="gap-2">
+          <Download className="h-4 w-4" />
+          Download
+        </Button>
+        <Link href={`/helpline/${qrId}`} passHref>
+          <Button variant="secondary" className="gap-2">
+            <Scan className="h-4 w-4" />
             Visit Helpline
           </Button>
         </Link>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   )
 }
