@@ -112,7 +112,7 @@ export const PrintCard: React.FC<PrintCardProps> = ({ name, centreName, qrId }) 
           <Download className="h-4 w-4" />
           Download
         </Button>
-        <Link href={`/helpline/${qrId}`} passHref>
+        <Link href={`/${qrId}`} passHref>
           <Button variant="secondary" className="gap-2">
             <Scan className="h-4 w-4" />
             Visit Helpline

@@ -58,7 +58,7 @@ const page = async () => {
                 </CardContent>
                 <CardFooter className="flex justify-end">
                   <Button asChild variant="destructive" className="w-full">
-                    <Link href={`/helpline/${centre.id}`} className='uppercase'>
+                    <Link href={`/${centre.id}`} className='uppercase'>
                       Request Assistance
                     </Link>
                   </Button>
